@@ -33,27 +33,31 @@ opposites = {'n': 's', 'e': 'w', 's': 'n', 'w': 'e'}
 #  Find all available paths
 
 
-def find_paths(first_room, visited=set()):
-    cur_visited = set()
+def create_route(first_room, visited=set()):
+    visited_set = set()
 
     for room in visited:
-        cur_visited.add(room)
+        visited_set.add(room)
     path = []
 
-    def add_to_path(room, back=None):
-        cur_visited.add(room)
+    # Recurse though opposites when we start moving
+    def create_paths(room, back=None):
+        visited_set.add(room)
         exits = room.get_exits()
 
         for direction in exits:
-            if room.get_room_in_direction(direction) not in cur_visited:
+            # If we have not visited an exit:
+            if room.get_room_in_direction(direction) not in visited_set:
+                # Move in that direction
                 path.append(direction)
-                add_to_path(room.get_room_in_direction(
+                create_paths(room.get_room_in_direction(
                     direction), opposites[direction])
+
         # If we can go back
         if back:
             path.append(back)
 
-    add_to_path(first_room)
+    create_paths(first_room)
     return path
 
 
@@ -61,43 +65,45 @@ def shortest_path(first_room, visited=set()):
     path = []
 
     # Function to find the path
-    def add_to_path(room, back=None):
+    def create_paths(room, back=None):
         visited.add(room)
         exits = room.get_exits()
         path_lengths = {}
 
-        # Recurse through find_paths for every direction
+        # Recurse through create_route for every direction
         # BFS approach
         for direction in exits:
-            path_lengths[direction] = len(find_paths(
+            path_lengths[direction] = len(create_route(
                 room.get_room_in_direction(direction), visited))
 
         # Init the order we are going to take
         traverse_order = []
 
         # Sort by shortest path first
+        # Sorting it is the key!!
         sorted_paths = sorted(path_lengths.items(), key=lambda x: x[1])
 
         # Add the sorted directions to order
-        for key, _ in sorted_paths:
+        for key, i in sorted_paths:
             traverse_order.append(key)
 
         for direction in traverse_order:
             # If not visited ->
             if room.get_room_in_direction(direction) not in visited:
                 path.append(direction)
-                add_to_path(room.get_room_in_direction(
+                create_paths(room.get_room_in_direction(
                     direction), opposites[direction])
 
         # If the length of visited is the same as rooms, we're done
         if len(visited) == len(world.rooms):
             return
+
         # Else keep going
         elif back:
             path.append(back)
 
     # Run through first room
-    add_to_path(first_room)
+    create_paths(first_room)
     return path
 
 
